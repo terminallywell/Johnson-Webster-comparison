@@ -10,3 +10,17 @@ missing = [word for word in johnson if not word in nwad]
 
 with open('missing.txt', 'w') as file:
     file.write('\n'.join(sorted(missing)))
+
+
+# Spelling differences
+# * -or/-our (colour, ardour, labour, ...) search: our\n
+# * -ic/-ick (academick, tactick, ...) search: ick\n
+# * -er/-re (fibre, centre, lustre, ...) search: [^aeiou]re\n
+# * offense/offence
+# * connection/connexion
+# * willful/wilful, skillful/skilful
+# * spectacle/specktacle
+# * ax/axe, pickax/pickaxe
+
+# Hyphenation (remove from NWAD)
+# * afternoon/after-noon

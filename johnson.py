@@ -4,17 +4,6 @@ import xml.etree.ElementTree as ET
 
 words = [filename.split('-')[1] for filename in os.listdir('XMLs')]
 
-# Spelling differences
-# * -or/-our (colour, ardour, labour, ...) search: our\n
-# * -ic/-ick (academick, tactick, ...) search: ick\n
-# * -er/-re (fibre, centre, lustre, ...) search: [^aeiou]re\n
-# * offense/offence
-# * connection/connexion
-# * willful/wilful, skillful/skilful
-# * spectacle/specktacle
-# * ax/axe, pickax/pickaxe
-# Hyphenation (remove from NWAD)
-# * afternoon/after-noon
 
 def getxmls(word: str) -> list[ET.Element]:
     xmls = []
