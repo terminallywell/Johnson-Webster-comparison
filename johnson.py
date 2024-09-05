@@ -4,14 +4,21 @@ import xml.etree.ElementTree as ET
 
 words = [filename.split('-')[1] for filename in os.listdir('XMLs')]
 
-
-# need to account for redirects
-
-# TODO: spelling (and hyphenation?) differences (e.g. offense/offence), any redirects?
+# Spelling differences
+# * -or/-our (colour, ardour, labour, ...) search: our\n
+# * -ic/-ick (academick, tactick, ...) search: ick\n
+# * -er/-re (fibre, centre, lustre, ...) search: [^aeiou]re\n
+# * offense/offence
+# * connection/connexion
+# * willful/wilful, skillful/skilful
+# * spectacle/specktacle
+# * ax/axe, pickax/pickaxe
+# Hyphenation (remove from NWAD)
+# * afternoon/after-noon
 
 def getxmls(word: str) -> list[ET.Element]:
     xmls = []
-    
+
     n = 1
     while True:
         try:
@@ -43,3 +50,10 @@ def getdefs(word: str) -> list[str]:
 
 for d in getdefs('match'):
     print(d + '\n')
+
+############
+
+for filename in os.listdir('XMLs'):
+    with open('XMLs/' + filename, encoding='utf8') as file:
+        if 'ref target' in file.read():
+            print(filename)
