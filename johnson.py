@@ -2,7 +2,7 @@ import os
 import xml.etree.ElementTree as ET
 
 
-words = [filename.split('-')[1] for filename in os.listdir('XMLs')]
+words = sorted(set([filename.split('-')[1] for filename in os.listdir('XMLs')]))
 
 
 def getxmls(word: str) -> list[ET.Element]:
@@ -11,7 +11,7 @@ def getxmls(word: str) -> list[ET.Element]:
     n = 1
     while True:
         try:
-            with open(f'XMLs/f1755-{word}-{n}.xml') as file:
+            with open(f'XMLs/f1755-{word}-{n}.xml', encoding='utf8') as file:
                 xmls.append(ET.parse(file).getroot())
                 n += 1
         except FileNotFoundError:
@@ -21,13 +21,15 @@ def getxmls(word: str) -> list[ET.Element]:
 
 
 def extract_text(element: ET.Element) -> str:
-    text = element.text
+    text = element.text or ''
     for child in element:
-        text += extract_text(child) # type: ignore
-        text += child.tail # type: ignore
-    return text.strip() # type: ignore
+        text += extract_text(child)
+        if child.tail:
+            text += child.tail
+    return text.strip()
 
 
+# function to look up definitions of word from files
 def getdefs(word: str) -> list[str]:
     defs = []
     
@@ -37,11 +39,12 @@ def getdefs(word: str) -> list[str]:
 
     return defs
 
-for d in getdefs('match'):
+for d in getdefs('appeal'):
     print(d + '\n')
 
 ############
 
+# forgot what this was for; maybe something to do with hyperlinks?
 for filename in os.listdir('XMLs'):
     with open('XMLs/' + filename, encoding='utf8') as file:
         if 'ref target' in file.read():
