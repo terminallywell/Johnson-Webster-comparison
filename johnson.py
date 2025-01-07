@@ -47,5 +47,5 @@ for d in getdefs('appeal'):
 # forgot what this was for; maybe something to do with hyperlinks?
 for filename in os.listdir('XMLs'):
     with open('XMLs/' + filename, encoding='utf8') as file:
-        if 'ref target' in file.read():
+        if 'ref target="#f1755' in file.read():
             print(filename)
