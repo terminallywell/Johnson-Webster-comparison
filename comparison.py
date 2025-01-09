@@ -12,7 +12,7 @@ with open('missing.txt', 'w') as file:
     file.write('\n'.join(sorted(missing)))
 
 
-# Spelling differences
+# Spelling differences (Webster/Johnson)
 # * -or/-our (colour, ardour, labour, ...) search: our\n
 # * -ic/-ick (academick, tactick, ...) search: ick\n
 # * -er/-re (fibre, centre, lustre, ...) search: [^aeioucr]re\n
@@ -24,12 +24,12 @@ with open('missing.txt', 'w') as file:
 # * ax/axe, pickax/pickaxe
 # * skirr/skirre
 # * ransom/ransome
-# * racoon/rackoon
+# * racoon/rackoon (raccoon)
 
 # Hyphenation (remove from NWAD)
 # * afternoon/after-noon
 
-# apply changes
+# apply changes and make new list
 import re
 
 johnson_new = []
@@ -54,5 +54,3 @@ with open('missing_new.txt', 'w') as file:
 ## tokenization:
 ## remove articles
 ## capture 2+ subseq (as opposed to 3)
-
-
