@@ -26,7 +26,6 @@ import re
 # morpheme differences
 diff = {
     r'our$': 'or', # favour etc.
-    # r'oured$': 'ored', # favoured etc.
     r'ourabl': 'orabl', # favourable/favourably etc.
     r'ick$': 'ic', # magick etc.
     r'ack$': 'ac', # zodiack etc.
@@ -34,11 +33,10 @@ diff = {
     r'ise$': 'ize',
     r'eable$': 'able',
     r'eably$': 'ably',
-    r'cloath': 'cloth',
     r'alchym': 'alchim',
 }
 
-def apply_diff(diff:dict, s: str) -> str:
+def apply_diff(s: str) -> str:
     for old, new in diff.items():
         s = re.sub(old, new, s)
     return s
@@ -46,7 +44,7 @@ def apply_diff(diff:dict, s: str) -> str:
 
 changes = {} # why is 'micmik:mimic' not in this?
 for word in missing:
-    new = apply_diff(diff, word)
+    new = apply_diff(word)
     if word != new:
         changes[word] = new
 
@@ -62,39 +60,40 @@ changes['pickaxe'] = 'pickax'
 changes['skirre'] = 'skirr'
 changes['ransome'] = 'ransom'
 changes['rackoon'] = 'racoon'
+changes['cloath'] = 'cloth'
 
 
 # apply changes and compile new missing list
 # words that either didn't change or still not in nwad after changes applied
 # missing_new = {changes.get(word, word) for word in missing if changes.get(word, word) not in nwad}
-missing_new = set()
-for word in missing:
-    new = apply_diff(changes, word)
-    if new not in nwad:
-        missing_new.add(new)
+# missing_new = set()
+# for word in missing:
+#     new = apply_diff(changes, word)
+#     if new not in nwad:
+#         missing_new.add(new)
 
-with open('missing_new.txt', 'w') as file:
-    file.write('\n'.join(sorted(missing_new)))
+# with open('missing_new.txt', 'w') as file:
+#     file.write('\n'.join(sorted(missing_new)))
 
 
 
 ###
-'''maybe run fuzzy match/distance search?'''
-from rapidfuzz import distance
+# '''maybe run fuzzy match/distance search?'''
+# from rapidfuzz import distance
 
-close = {}
-for word_j in missing_new:
-    for word_n in nwad:
-        if word_n[0] == word_j[0]: # only search same first letter to save on computation
-            if distance.DamerauLevenshtein.distance(word_j, word_n) < 2:
-                close.setdefault(word_j, []).append(word_n)
+# close = {}
+# for word_j in missing_new:
+#     for word_n in nwad:
+#         if word_n[0] == word_j[0]: # only search same first letter to save on computation
+#             if distance.DamerauLevenshtein.distance(word_j, word_n) < 2:
+#                 close.setdefault(word_j, []).append(word_n)
 
-with open('close.csv', 'w') as file:
-    file.write('JOHNSON,NWAD\n')
-    for j in sorted(close.keys()):
-        for n in close[j]:
-            if n not in johnson:
-                file.write(','.join((j, n)) + '\n')
+# with open('close.csv', 'w') as file:
+#     file.write('JOHNSON,NWAD\n')
+#     for j in sorted(close.keys()):
+#         for n in close[j]:
+#             if n not in johnson:
+#                 file.write(','.join((j, n)) + '\n')
 
 # with open('close_mult.csv', 'w') as file:
 #     file.write('JOHNSON,NWAD\n')
@@ -108,8 +107,10 @@ with open('close.csv', 'w') as file:
 
 ###
 # Rewrite Johnson using `changes`
-def tokenize(string):
-    # split, lower, remove article, strip punct & number
-    return [apply_diff(changes, word) for word in re.findall(r'\b[a-zA-Z]+\b', string.lower()) if word not in {"a", "an", "the"}]
+def apply_changes(s: str) -> str:
+    for old, new in changes.items():
+        s = s.replace(old, new)
+    return s
+
 
 
