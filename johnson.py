@@ -39,13 +39,13 @@ def getdefs(word: str) -> list[str]:
 
     return defs
 
-for d in getdefs('appeal'):
-    print(d + '\n')
+# for d in getdefs('appeal'):
+#     print(d + '\n')
 
 ############
 
-# forgot what this was for; maybe something to do with hyperlinks?
-for filename in os.listdir('XMLs'):
-    with open('XMLs/' + filename, encoding='utf8') as file:
-        if 'ref target="#f1755' in file.read():
-            print(filename)
+# # forgot what this was for; maybe something to do with hyperlinks?
+# for filename in os.listdir('XMLs'):
+#     with open('XMLs/' + filename, encoding='utf8') as file:
+#         if 'ref target="#f1755' in file.read():
+#             print(filename)
