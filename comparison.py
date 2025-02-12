@@ -2,25 +2,17 @@ import re
 import json
 from difflib import SequenceMatcher
 
+nwad = json.load(open('nwad.json'))
+johnson = json.load(open('johnson.json'))
+
+
 ## tokenization:
 ## remove articles
-## capture 2+ subseq (as opposed to 3)
 def tokenize(string):
     # split, lower, remove article, strip punct & number
     return [word for word in re.findall(r'\b[a-zA-Z]+\b', string.lower()) if word not in {"a", "an", "the"}]
 
-
-nwad = json.load(open('nwad.json'))
-# remove POS entries from nwad
-for word in nwad:
-    old = nwad[word]
-    new = [d for d in old if len(d) > 5]
-    nwad[word] = new
-
-johnson = json.load(open('johnson.json'))
-
-
-junk = {'(the)', 'of', 'to', 'or', 'and', 'in', 'by', 'that', 'as', 'for', 'from'}
+junk = {'of', 'to', 'or', 'and', 'in', 'by', 'that', 'as', 'for', 'from'}
 def nonjunklen(seq):
     return sum(1 for word in seq if word not in junk)
 
@@ -29,7 +21,7 @@ matches = []
 for word in nwad:
     for sense_nw in nwad[word]:
         tn = tokenize(sense_nw)
-        for sense_johnson in johnson.get(word.lower(), []):
+        for sense_johnson in johnson.get(word, []):
             tj = tokenize(sense_johnson)
             sm = SequenceMatcher(None, tn , tj).get_matching_blocks()
             blocks = [tn[a:a+size] for a, b, size in sm if nonjunklen(tn[a:a+size]) > 0] # minimum block length = 1
@@ -40,7 +32,8 @@ for word in nwad:
                     sense_johnson,
                     ' [...] '.join(' '.join(block) for block in blocks),
                     matchlen,
-                    max(map(len, blocks))
+                    max(map(len, blocks)),
+                    sm[0].a + 1,
                     ))
 
 for i, t in enumerate(sorted(matches, key = lambda t: t[5])):
@@ -48,10 +41,9 @@ for i, t in enumerate(sorted(matches, key = lambda t: t[5])):
 
 # match format: word/M-W sense/1812 sense/matching subsequence/total match length/longest contiguous match length
 with open('johnson_matches.tsv', 'w', encoding='utf8') as file:
-    file.write('word\tNWAD sense\tJohnson sense\tmatching subsequence\ttotal match length\tlongest contiguous match length\n')
+    file.write('word\tNWAD sense\tJohnson sense\tmatching subsequence\ttotal match length\tlongest contiguous match length\tmatch start\n')
     for match in matches:
         file.write('\t'.join((str(c).replace('\n', ' ') for c in match)) + '\n')
-
 
 
 # from rapidfuzz import fuzz, utils, distance

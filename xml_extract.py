@@ -1,10 +1,6 @@
 import os
 import xml.etree.ElementTree as ET
 
-
-words = sorted(set([filename.split('-')[1] for filename in os.listdir('XMLs')]))
-
-
 def getxmls(word: str) -> list[ET.Element]:
     xmls = []
 
@@ -39,26 +35,5 @@ def getdefs(word: str) -> list[str]:
 
     return defs
 
-# compile into new json with spelling translation
-# from preprocess import apply_changes
+# apply `changes` to headwords and definitions and compile into json
 
-# johnson = {}
-# for word in words:
-#     print(word)
-#     headword = apply_changes(word)
-#     johnson[headword] = [apply_changes(d) for d in getdefs(word)]
-
-# import json
-# with open('johnson.json', 'w') as file:
-#     json.dump(johnson, file)
-
-# for d in getdefs('appeal'):
-#     print(d + '\n')
-
-############
-
-# # forgot what this was for; maybe something to do with hyperlinks?
-# for filename in os.listdir('XMLs'):
-#     with open('XMLs/' + filename, encoding='utf8') as file:
-#         if 'ref target="#f1755' in file.read():
-#             print(filename)

@@ -1,89 +1,101 @@
-# checking which headwords in Johnson is missing in NWAD
+'''
+Effort to "fix" the spelling differences between Johnson and NWAD as much as possible
+After building spelling adjustment dictionary, apply to Johnson and compile new json
+'''
+import os
+from nwad import nwad
 
-with open('words.txt', encoding='utf8') as file:
-    johnson = set(file.read().split())
+nwad_words = nwad.keys()
 
-with open('NWAD_words.txt', encoding='utf8') as file:
-    nwad = set(file.read().lower().replace('-', '').replace('’', '').split()) # remove hyphen in headwords
+# johnson \ nwad
+johnson_words = sorted(set([''.join(filename.split('-')[1:-1]) for filename in os.listdir('XMLs')]))
 
-missing = {word for word in johnson if not word in nwad}
+missing = {word for word in johnson_words if word not in nwad_words}
 
-# words in johnson that are not in nwad
+# write as file
 with open('missing.txt', 'w') as file:
     file.write('\n'.join(sorted(missing)))
+    # inspect missing.txt to pick up some morphemic differences, e.g. -ick vs. -ic
 
-
-
-
-# apply changes and make new list
-# 1. identify words in johnson missing in nwad -> "missing"
-# 2. identify spelling differences, compile dictionary
-# 3. apply spelling correction on "missing"
-# 4. now you have "old: new" for lemma
-# 5. rewrite johnson so it catches inflected versions (e.g. "antagonise" -> "antagonize" in "antagonised")
+# compile morphemic differences as dictionary
 import re
 
-# morpheme differences
-diff = {
+morph = { # lists subword replacements
     r'our$': 'or', # favour etc.
-    r'ourabl': 'orabl', # favourable/favourably etc.
     r'ick$': 'ic', # magick etc.
     r'ack$': 'ac', # zodiack etc.
-    r'([^aeioucr])re$': r'\1er',
-    r'ise$': 'ize',
-    r'eable$': 'able',
+    r'([^aeioucr])re$': r'\1er', # lustre etc.
+    r'ise$': 'ize', # equalise etc.
+    r'eable$': 'able', # moveable etc.
     r'eably$': 'ably',
+
+    # add more specific replacements as you examine `missing`
+    r'ourabl': 'orabl', # favourable/favourably etc.
     r'alchym': 'alchim',
+    r'lesly': 'lessly',
+    r'lesness': 'lessness',
+    r'^mould': 'mold',
+    r'cloath': 'cloth',
+    r'skeptic': 'sceptic',
 }
 
-def apply_diff(s: str) -> str:
-    for old, new in diff.items():
-        s = re.sub(old, new, s)
-    return s
+# compile dict of {missing word: missing word but `morph` applied} --- "changes"
+def apply_morph(word: str) -> str:
+    for pattern, repl in morph.items():
+        word = re.sub(pattern, repl, word)
+    return word
 
-
-changes = {} # why is 'micmik:mimic' not in this?
+# mainly for adjustment documentation purposes
+changes = {} # lists whole-word changes, that can also be applied to inflected occurrences
 for word in missing:
-    new = apply_diff(word)
-    if word != new:
+    new = apply_morph(word)
+    if new != word:
         changes[word] = new
 
-# add individual word differences to changes
+# add individual word differences to `changes`
 changes['offence'] = 'offense'
+changes['defence'] = 'defense'
 changes['listner'] = 'listener'
 changes['connexion'] = 'connection'
 changes['wilful'] = 'willful'
 changes['skilful'] = 'skillful'
 changes['specktacle'] = 'spectacle'
-changes['axe'] = 'ax'
+# changes['axe'] = 'ax' # excluded due to concerns of "taxes" -> "taxs" etc. during apply_change
 changes['pickaxe'] = 'pickax'
 changes['skirre'] = 'skirr'
 changes['ransome'] = 'ransom'
 changes['rackoon'] = 'racoon'
-changes['cloath'] = 'cloth'
 
 
-# apply changes and compile new missing list
-# words that either didn't change or still not in nwad after changes applied
-# missing_new = {changes.get(word, word) for word in missing if changes.get(word, word) not in nwad}
-# missing_new = set()
-# for word in missing:
-#     new = apply_diff(changes, word)
-#     if new not in nwad:
-#         missing_new.add(new)
-
-# with open('missing_new.txt', 'w') as file:
-#     file.write('\n'.join(sorted(missing_new)))
+with open('changes.csv', 'w') as file:
+    for item in sorted(changes.items(), key=lambda p: p[0]):
+        file.write(','.join(item) + '\n')
 
 
+# apply `changes` to words in `missing` and compile new list
+# words that either did not change or still not in NWAD after apply_morph
+def apply_changes(string: str) -> str:
+    for old, new in changes.items():
+        string = string.replace(old, new)
+    return string
 
-###
-# '''maybe run fuzzy match/distance search?'''
+missing_new = {apply_changes(word) for word in missing if apply_changes(word) not in nwad_words}
+
+
+for word in missing:
+    if apply_changes(word) == 'monks':
+        print(word)
+
+# write as file
+with open('missing_new.txt', 'w') as file:
+    file.write('\n'.join(sorted(missing_new)))
+
+# look for close neighbors 
 # from rapidfuzz import distance
 
 # close = {}
 # for word_j in missing_new:
-#     for word_n in nwad:
+#     for word_n in nwad_words:
 #         if word_n[0] == word_j[0]: # only search same first letter to save on computation
 #             if distance.DamerauLevenshtein.distance(word_j, word_n) < 2:
 #                 close.setdefault(word_j, []).append(word_n)
@@ -92,7 +104,7 @@ changes['cloath'] = 'cloth'
 #     file.write('JOHNSON,NWAD\n')
 #     for j in sorted(close.keys()):
 #         for n in close[j]:
-#             if n not in johnson:
+#             if n not in johnson_words:
 #                 file.write(','.join((j, n)) + '\n')
 
 # with open('close_mult.csv', 'w') as file:
@@ -100,17 +112,16 @@ changes['cloath'] = 'cloth'
 #     for j in sorted(close.keys()):
 #         if len(close[j]) > 1:
 #             for n in close[j]:
-#                 if n not in johnson:
+#                 if n not in johnson_words:
 #                     file.write(','.join((j, n)) + '\n')
 #             file.write('\n')
+from xml_extract import getdefs
 
+johnson = {}
+for word in johnson_words:
+    print(word)
+    johnson[apply_changes(word)] = [apply_changes(d) for d in getdefs(word)]
 
-###
-# Rewrite Johnson using `changes`
-def apply_changes(s: str) -> str:
-    for old, new in changes.items():
-        s = s.replace(old, new)
-    return s
-
-
-
+import json
+with open('johnson.json', 'w') as file:
+    json.dump(johnson, file)
